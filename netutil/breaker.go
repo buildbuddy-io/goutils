@@ -95,3 +95,23 @@ func NewBreaker() *circuit.Breaker {
 		ShouldTrip: circuit.ThresholdTripFunc(1),
 	})
 }
+
+// NewBreakerWithBackoff returns a new breaker with the specified initial and
+// max backoff intervals.
+func NewBreakerWithBackoff(initialInterval, maxInterval time.Duration) *circuit.Breaker {
+	c := &breakerClock{}
+	b := &backoff.ExponentialBackOff{
+		InitialInterval:     initialInterval,
+		RandomizationFactor: 0.5,
+		Multiplier:          1.5,
+		MaxInterval:         maxInterval,
+		MaxElapsedTime:      0,
+		Clock:               c,
+	}
+	b.Reset()
+	return circuit.NewBreakerWithOptions(&circuit.Options{
+		BackOff:    b,
+		Clock:      c,
+		ShouldTrip: circuit.ThresholdTripFunc(1),
+	})
+}
